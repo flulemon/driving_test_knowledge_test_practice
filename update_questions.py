@@ -19,7 +19,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--output",
-        default=str(BASE_DIR / "app.html"),
+        default=str(BASE_DIR / "docs" / "index.html"),
         help="Output HTML file to write.",
     )
     return parser.parse_args()
