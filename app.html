@@ -1,0 +1,2238 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Question Trainer</title>
+  <style>
+    :root {
+      --bg: #f4f1ec;
+      --ink: #1e1b16;
+      --muted: #6c5f4b;
+      --accent: #c96b3a;
+      --accent-2: #2d6a4f;
+      --card: #fffaf3;
+      --border: #e0d7c8;
+      --shadow: 0 10px 30px rgba(30, 27, 22, 0.08);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 10%, rgba(201, 107, 58, 0.15), transparent 50%),
+        radial-gradient(circle at 90% 20%, rgba(45, 106, 79, 0.12), transparent 45%),
+        var(--bg);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 32px 16px;
+    }
+
+    .app {
+      width: min(880px, 100%);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .app::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(135deg, rgba(201, 107, 58, 0.08), transparent 45%),
+        linear-gradient(315deg, rgba(45, 106, 79, 0.08), transparent 55%);
+      pointer-events: none;
+    }
+
+    .content {
+      position: relative;
+      z-index: 1;
+    }
+
+    h1, h2, h3 {
+      margin: 0 0 16px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    p {
+      margin: 0 0 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .mode-grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      margin-top: 24px;
+    }
+
+    .mode-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      background: #fff;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      display: grid;
+      gap: 8px;
+    }
+
+    .mode-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(30, 27, 22, 0.12);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .hidden { display: none; }
+
+    .question-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .progress {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .options {
+      display: grid;
+      gap: 12px;
+      margin: 20px 0 24px;
+    }
+
+    .option {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #fff;
+      cursor: pointer;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+
+    .option input { margin: 0; }
+
+    .option.selected {
+      border-color: var(--accent);
+      background: rgba(201, 107, 58, 0.08);
+    }
+
+    .option.correct {
+      border-color: rgba(45, 106, 79, 0.7);
+      background: rgba(45, 106, 79, 0.12);
+    }
+
+    .option.incorrect {
+      border-color: rgba(201, 107, 58, 0.7);
+      background: rgba(201, 107, 58, 0.12);
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 12px 20px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+      font-family: inherit;
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    button.secondary {
+      background: var(--accent-2);
+      color: white;
+    }
+
+    button.ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .summary-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+      max-height: 320px;
+      overflow: auto;
+      padding-right: 6px;
+    }
+
+    .summary-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      background: #fff;
+    }
+
+    .summary-item .muted {
+      margin: 4px 0;
+    }
+
+    .summary-item strong {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .question-count {
+      margin-right: 8px;
+    }
+
+    @media (max-width: 600px) {
+      .app { padding: 22px; }
+      button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="content">
+      <section id="welcome">
+        <h1>Knowledge Check</h1>
+        <p>Select a mode to begin testing yourself on the question set. Your results will be summarized at the end.</p>
+        <div class="mode-grid">
+          <button class="mode-card" data-mode="set1" type="button">
+            <h3>Questions 1-50</h3>
+            <p class="muted">First 50 questions in order.</p>
+          </button>
+          <button class="mode-card" data-mode="set2" type="button">
+            <h3>Questions 51-100</h3>
+            <p class="muted">Next 50 questions in order.</p>
+          </button>
+          <button class="mode-card" data-mode="set3" type="button">
+            <h3>Questions 101-150</h3>
+            <p class="muted">Third set of 50 questions.</p>
+          </button>
+          <button class="mode-card" data-mode="set4" type="button">
+            <h3>Questions 151+</h3>
+            <p class="muted">Remaining questions.</p>
+          </button>
+          <button class="mode-card" data-mode="random25" type="button">
+            <h3>Random 25</h3>
+            <p class="muted">A 25-question randomized session.</p>
+          </button>
+          <button class="mode-card" data-mode="random50" type="button">
+            <h3>Random 50</h3>
+            <p class="muted">A 50-question randomized session.</p>
+          </button>
+          <button class="mode-card" data-mode="random5" type="button">
+            <h3>Random 5</h3>
+            <p class="muted">A 5-question randomized session.</p>
+          </button>
+        </div>
+      </section>
+
+      <section id="quiz" class="hidden">
+        <div class="question-header">
+          <h2 id="question-text"></h2>
+          <span class="progress" id="progress"></span>
+        </div>
+        <form id="options" class="options"></form>
+        <div class="actions">
+          <button id="check-btn" class="primary" type="button" disabled>Check answer</button>
+          <button id="next-btn" class="secondary hidden" type="button">Next</button>
+          <button id="quit-btn" class="ghost" type="button">Quit</button>
+        </div>
+      </section>
+
+      <section id="summary" class="hidden">
+        <h2>Session Summary</h2>
+        <p id="summary-stats"></p>
+        <div class="summary-list" id="summary-list"></div>
+        <div class="actions" style="margin-top: 24px;">
+          <button id="restart-btn" class="primary" type="button">Start over</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const QUESTIONS = [
+  {
+    "question": "If you're in an accident where there is personal injury and you are on the revoked list you will receive a jail term of",
+    "answer_options": [
+      "30 Days",
+      "45 Days",
+      "60 Days",
+      "90 Days"
+    ],
+    "correct_answer": "45 Days"
+  },
+  {
+    "question": "Under the New Jersey point system a person having a license over two years after how many points will get notice of license suspension",
+    "answer_options": [
+      "6 Points",
+      "9 Points",
+      "12 Points",
+      "15 Points"
+    ],
+    "correct_answer": "12 Points"
+  },
+  {
+    "question": "Failure to give a way to a passing vehicle yield may cost you how many points against your driver's license",
+    "answer_options": [
+      "3 Points",
+      "2 Points",
+      "1 Point",
+      "None of the above"
+    ],
+    "correct_answer": "2 Points"
+  },
+  {
+    "question": "Following too closely tailgating may cost you how many points against your driving license",
+    "answer_options": [
+      "2",
+      "3",
+      "4",
+      "5"
+    ],
+    "correct_answer": "5"
+  },
+  {
+    "question": "What are the penalties for driving with a suspended license",
+    "answer_options": [
+      "Fine of $500 and up to 6 months additional license suspension",
+      "Fine of $250",
+      "Fine of $250 and up to 3 months additional license suspension",
+      "Fine of $500"
+    ],
+    "correct_answer": "Fine of $500 and up to 6 months additional license suspension"
+  },
+  {
+    "question": "If a GDL driver commits any GDL conditions other than a moving violation they will receive a fine of",
+    "answer_options": [
+      "$500",
+      "Loss of license and $150",
+      "$100",
+      "None of the answers"
+    ],
+    "correct_answer": "$100"
+  },
+  {
+    "question": "A special GDL permit allows you to drive",
+    "answer_options": [
+      "After you completed a driver education course and are at least 16 years old",
+      "None of the answers",
+      "When you turn 17",
+      "When you are 16 and with someone over the age of 21"
+    ],
+    "correct_answer": "After you completed a driver education course and are at least 16 years old"
+  },
+  {
+    "question": "Drivers who accumulate 12 to 14 points in a 24 month period will be required to do which of the following",
+    "answer_options": [
+      "Attend a New Jersey driver program",
+      "Request a hearing",
+      "Surrender their license for the suspension period",
+      "All of the above"
+    ],
+    "correct_answer": "All of the above"
+  },
+  {
+    "question": "What is the penalty for driving while possessing drugs",
+    "answer_options": [
+      "Loss of license for two years and minimum $50 fine",
+      "Five years imprisonment",
+      "$500 Fine and one year imprisonment",
+      "None of the above"
+    ],
+    "correct_answer": "Loss of license for two years and minimum $50 fine"
+  },
+  {
+    "question": "How often does MVC allow you to take a defensive driving course that may reduce the points on your driver's record",
+    "answer_options": [
+      "Once every 3 years",
+      "Once every 10 years",
+      "Every year",
+      "Once every five years"
+    ],
+    "correct_answer": "Once every five years"
+  },
+  {
+    "question": "When will you be given a proposed license suspension notice",
+    "answer_options": [
+      "When you get 4 points",
+      "When you get 6 points",
+      "When you get 10 points",
+      "When you get 12 points"
+    ],
+    "correct_answer": "When you get 12 points"
+  },
+  {
+    "question": "What is the penalty for driving a vehicle with an expired inspection sticker",
+    "answer_options": [
+      "Fine",
+      "Arrest",
+      "Registration revocation",
+      "All of the above"
+    ],
+    "correct_answer": "All of the above"
+  },
+  {
+    "question": "What is the penalty for not telling the truth when applying for a license",
+    "answer_options": [
+      "A fine of $25 to $100",
+      "Imprisonment of six months",
+      "A court trial",
+      "No less than a $200 fine and up to six months imprisonment"
+    ],
+    "correct_answer": "No less than a $200 fine and up to six months imprisonment"
+  },
+  {
+    "question": "Getting a driver's license illegally may result in a",
+    "answer_options": [
+      "Fine of $25 to $100",
+      "Imprisonment of 6 months",
+      "A court trial",
+      "A fine of $200 to $500 and/or imprisonment from 30 to 90 days"
+    ],
+    "correct_answer": "A fine of $200 to $500 and/or imprisonment from 30 to 90 days"
+  },
+  {
+    "question": "What are the fines and penalties for refusing to take the breathalyzer test",
+    "answer_options": [
+      "$10,000 Fine six months jail time license suspension loss",
+      "Automatic DUI conviction",
+      "License revoked for life",
+      "7 Months to one year license suspension court costs and fines insurance surcharge of $1,000 for 3 years"
+    ],
+    "correct_answer": "7 Months to one year license suspension court costs and fines insurance surcharge of $1,000 for 3 years"
+  },
+  {
+    "question": "If a student driver commits a traffic offense who is responsible",
+    "answer_options": [
+      "The student",
+      "The instructor supervisor",
+      "The parent",
+      "Both A and B"
+    ],
+    "correct_answer": "Both A and B"
+  },
+  {
+    "question": "Graduated driver license fines are how much",
+    "answer_options": [
+      "$50",
+      "$150",
+      "$100",
+      "$75"
+    ],
+    "correct_answer": "$100"
+  },
+  {
+    "question": "Your score on the written knowledge test must be at least this percent to obtain a special learner's permit",
+    "answer_options": [
+      "90%",
+      "80%",
+      "60%",
+      "75%"
+    ],
+    "correct_answer": "80%"
+  },
+  {
+    "question": "What are the fines and penalties for altering forging and/or intent to distribute fake driver's licenses",
+    "answer_options": [
+      "200 To $500 fine and possible jail time of 30 to 90 days",
+      "License revoked for life",
+      "Insurance surcharge of $1,000 for 3 years",
+      "$10,000 Fine six months jail time license suspension loss"
+    ],
+    "correct_answer": "$10,000 Fine six months jail time license suspension loss"
+  },
+  {
+    "question": "A driver will get an insurance surcharge for which of the following",
+    "answer_options": [
+      "Not having proof of liability insurance in the vehicle",
+      "DUI conviction",
+      "Refusing to take the breathalyzer test",
+      "All of the above"
+    ],
+    "correct_answer": "All of the above"
+  },
+  {
+    "question": "What colors is a yield sign",
+    "answer_options": [
+      "Yellow and black",
+      "Red and white",
+      "White and yellow",
+      "Black and red"
+    ],
+    "correct_answer": "Red and white"
+  },
+  {
+    "question": "A railroad crossing signal is",
+    "answer_options": [
+      "Red and white",
+      "Black and white",
+      "Yellow and black",
+      "Black and red"
+    ],
+    "correct_answer": "Yellow and black"
+  },
+  {
+    "question": "Information signs are what color",
+    "answer_options": [
+      "Blue or green",
+      "Red or blue",
+      "Green or yellow",
+      "Yellow or black"
+    ],
+    "correct_answer": "Blue or green"
+  },
+  {
+    "question": "A warning sign is what shape",
+    "answer_options": [
+      "Rectangular",
+      "Diamond",
+      "Circle",
+      "Eight-sided"
+    ],
+    "correct_answer": "Diamond"
+  },
+  {
+    "question": "The color of a bicycle warning could be",
+    "answer_options": [
+      "Yellow green",
+      "Black orange",
+      "Blue yellow",
+      "Black white"
+    ],
+    "correct_answer": "Yellow green"
+  },
+  {
+    "question": "What color are warning signs",
+    "answer_options": [
+      "Blue",
+      "Red",
+      "Green",
+      "Yellow"
+    ],
+    "correct_answer": "Yellow"
+  },
+  {
+    "question": "The shape of a` yield sign is",
+    "answer_options": [
+      "Circle",
+      "Diamond",
+      "Triangle",
+      "Octagon"
+    ],
+    "correct_answer": "Triangle"
+  },
+  {
+    "question": "The meaning of a hand signal when a driver's hand and arm is downward is",
+    "answer_options": [
+      "U-turn",
+      "Right turn",
+      "Left turn",
+      "Slow or stop"
+    ],
+    "correct_answer": "Slow or stop"
+  },
+  {
+    "question": "What does an octagon shaped sign indicate",
+    "answer_options": [
+      "Stop",
+      "Warning",
+      "Yield",
+      "Do not enter"
+    ],
+    "correct_answer": "Stop"
+  },
+  {
+    "question": "What does a square with a red circle sign indicate",
+    "answer_options": [
+      "No passing",
+      "Warning",
+      "Yield",
+      "Do not enter"
+    ],
+    "correct_answer": "Do not enter"
+  },
+  {
+    "question": "A pentagon-shaped sign means which the following",
+    "answer_options": [
+      "Railroad crossing",
+      "School zone",
+      "No passing zone",
+      "Road narrows"
+    ],
+    "correct_answer": "School zone"
+  },
+  {
+    "question": "Yellow diamond shaped sign indicates which of the following",
+    "answer_options": [
+      "Construction",
+      "Warning",
+      "Bike lane",
+      "No passing zone"
+    ],
+    "correct_answer": "Warning"
+  },
+  {
+    "question": "A pennant-shaped sign means which of the following",
+    "answer_options": [
+      "School zone",
+      "Railroad crossing",
+      "Left turn only",
+      "No passing zone"
+    ],
+    "correct_answer": "No passing zone"
+  },
+  {
+    "question": "The shape of the stop sign is",
+    "answer_options": [
+      "Eight-sided",
+      "Demon (diamond)",
+      "Triangle point",
+      "Circle"
+    ],
+    "correct_answer": "Eight-sided"
+  },
+  {
+    "question": "The law allows you to turn right after stopping and yielding to all traffic and pedestrians at a red light unless",
+    "answer_options": [
+      "There is a flashing red light",
+      "There is a sign no turn on red",
+      "There is a stop sign",
+      "There is a red arrow pointing right"
+    ],
+    "correct_answer": "There is a sign no turn on red"
+  },
+  {
+    "question": "A single solid white line across a road at an intersection means",
+    "answer_options": [
+      "Stop behind the line for traffic light and pedestrians",
+      "Bus stop",
+      "No parking zone",
+      "No passing"
+    ],
+    "correct_answer": "Stop behind the line for traffic light and pedestrians"
+  },
+  {
+    "question": "What should you do when you see a stop sign",
+    "answer_options": [
+      "Come to a complete stop proceed when you have the right of way",
+      "Slow down yield proceed when you have the right of way",
+      "Come to a complete stop only if there is a vehicle coming from another direction",
+      "Come to a complete stop proceed after you flash your headlight"
+    ],
+    "correct_answer": "Come to a complete stop proceed when you have the right of way"
+  },
+  {
+    "question": "What does this white square sign with black lettering tell you",
+    "answer_options": [
+      "Stop ahead",
+      "Merge left",
+      "Keep going in the same direction",
+      "U turns allowed here"
+    ],
+    "correct_answer": "Keep going in the same direction"
+  },
+  {
+    "question": "This downward pointing equilateral triangle with a wide red border and red text on a white background is telling you what",
+    "answer_options": [
+      "Stop",
+      "Merge",
+      "No right turn on red",
+      "Yield"
+    ],
+    "correct_answer": "Yield"
+  },
+  {
+    "question": "What does this white rectangular sign with black lettering road closed telling you",
+    "answer_options": [
+      "Road closed unless you have an off-road vehicle",
+      "Road closed to all vehicles",
+      "Road is closed during night hours",
+      "Due to road conditions passing is not recommended"
+    ],
+    "correct_answer": "Road closed to all vehicles"
+  },
+  {
+    "question": "What does this rectangular red sign with white lettering \"wrong way\" tell you",
+    "answer_options": [
+      "Do not go this way",
+      "Park your car on the side of the road",
+      "Continue going in this direction",
+      "Speed up until you reach an intersection"
+    ],
+    "correct_answer": "Do not go this way"
+  },
+  {
+    "question": "Two yellow lines down the center of the road one dashed and one solid indicates which of the following",
+    "answer_options": [
+      "Two-way traffic no passing",
+      "One-way traffic passing only on dashed side",
+      "One-way traffic passing on both sides",
+      "Two-way traffic passing only on dashed side"
+    ],
+    "correct_answer": "Two-way traffic passing only on dashed side"
+  },
+  {
+    "question": "Using both safety belts and shoulder belts is important because they",
+    "answer_options": [
+      "Increase your chances of surviving a collision",
+      "Are required by law",
+      "Are required by the division of motor vehicles",
+      "Keep children away from the driver"
+    ],
+    "correct_answer": "Increase your chances of surviving a collision"
+  },
+  {
+    "question": "Yellow diamond shaped sign indicates which of the following",
+    "answer_options": [
+      "Construction",
+      "Warning",
+      "Bike lane",
+      "No passing zone"
+    ],
+    "correct_answer": "Warning"
+  },
+  {
+    "question": "An orange triangle with a glowing red border sign indicates which of the following",
+    "answer_options": [
+      "Slow down",
+      "Yield",
+      "Slow-moving vehicle",
+      "Construction"
+    ],
+    "correct_answer": "Slow-moving vehicle"
+  },
+  {
+    "question": "White diamonds painted on the road can indicate which of the following",
+    "answer_options": [
+      "All of the answers below",
+      "HOV lanes (high occupancy vehicle)",
+      "Bike lanes",
+      "Bus lanes"
+    ],
+    "correct_answer": "All of the answers below"
+  },
+  {
+    "question": "Solid center lines indicate which of the following",
+    "answer_options": [
+      "Passing allowed",
+      "Crosswalk",
+      "No passing allowed",
+      "Right turns allowed"
+    ],
+    "correct_answer": "No passing allowed"
+  },
+  {
+    "question": "White center lines mean which of the following",
+    "answer_options": [
+      "Two-way traffic",
+      "One-way traffic",
+      "Passing",
+      "No passing"
+    ],
+    "correct_answer": "One-way traffic"
+  },
+  {
+    "question": "Dashed center lines mean which of the following",
+    "answer_options": [
+      "Passing",
+      "No passing",
+      "One-way traffic",
+      "Two-way traffic"
+    ],
+    "correct_answer": "Passing"
+  },
+  {
+    "question": "Yellow center lines mean which of the following",
+    "answer_options": [
+      "One-way traffic",
+      "Bus stop line",
+      "Two-way traffic",
+      "Double crosswalk"
+    ],
+    "correct_answer": "Two-way traffic"
+  },
+  {
+    "question": "An inverted triangle-shaped sign indicated what",
+    "answer_options": [
+      "Warning",
+      "Stop",
+      "Do not enter",
+      "Yield"
+    ],
+    "correct_answer": "Yield"
+  },
+  {
+    "question": "What is this rectangular white sign with red lettering means",
+    "answer_options": [
+      "You should not stop stand park here unless absolutely required",
+      "Stopping acceptable as long as someone is present in the vehicle",
+      "Permitted to change a flat",
+      "Loading and unloading is allowed"
+    ],
+    "correct_answer": "You should not stop stand park here unless absolutely required"
+  },
+  {
+    "question": "This yellow sign with black symbols cautions that there is a",
+    "answer_options": [
+      "Speed bump to the right",
+      "Passing aloud on the shoulder",
+      "A sharp turn to the right ahead",
+      "A crosswalk coming up"
+    ],
+    "correct_answer": "A sharp turn to the right ahead"
+  },
+  {
+    "question": "What does this yellow equilateral triangle sign with red, black, white symbols warn you about",
+    "answer_options": [
+      "Bus stop",
+      "An upcoming yield sign",
+      "Three-point turn ahead",
+      "Runaway vehicle ramp"
+    ],
+    "correct_answer": "An upcoming yield sign"
+  },
+  {
+    "question": "What is the program the drivers are automatically enrolled in once they receive their learner's permit",
+    "answer_options": [
+      "Defensive driver program",
+      "Business liability law program",
+      "Graduated driver license program",
+      "Habitual offender program"
+    ],
+    "correct_answer": "Graduated driver license program"
+  },
+  {
+    "question": "This circular yellow sign with black markings identifies what",
+    "answer_options": [
+      "Actual railroad crossing",
+      "Railroad station",
+      "Renovation zone",
+      "Railroad crossing ahead"
+    ],
+    "correct_answer": "Railroad crossing ahead"
+  },
+  {
+    "question": "If you drive 50 miles per hour what is your stopping distance on dry surfaces for passenger car",
+    "answer_options": [
+      "102 Ft",
+      "247 Ft",
+      "343 Ft",
+      "53 Ft"
+    ],
+    "correct_answer": "247 Ft"
+  },
+  {
+    "question": "How close to a railroad crossing are you permitted to park",
+    "answer_options": [
+      "25 Ft",
+      "15 Ft",
+      "10 Ft",
+      "At least 50 ft"
+    ],
+    "correct_answer": "At least 50 ft"
+  },
+  {
+    "question": "It is illegal to pass if you are closer to an intersection or a railway crossing than a",
+    "answer_options": [
+      "50 Ft",
+      "100 Ft",
+      "150 Ft",
+      "200 Ft"
+    ],
+    "correct_answer": "100 Ft"
+  },
+  {
+    "question": "Driving 50 miles per hour at night what is the stopping distance",
+    "answer_options": [
+      "135 Ft",
+      "409 Ft",
+      "302 Ft",
+      "None of the above"
+    ],
+    "correct_answer": "302 Ft"
+  },
+  {
+    "question": "At a speed of 50 miles per hour how many car lengths should you stay behind the vehicle in front of you",
+    "answer_options": [
+      "25 Car lengths",
+      "15 Car lengths",
+      "5 Car lengths",
+      "10 Car lengths"
+    ],
+    "correct_answer": "5 Car lengths"
+  },
+  {
+    "question": "In ideal driving conditions what is the rule of thumb regarding following distance",
+    "answer_options": [
+      "Four car length for every 10 mph",
+      "Two car lengths",
+      "Half a length",
+      "One car length for every 10 mph"
+    ],
+    "correct_answer": "One car length for every 10 mph"
+  },
+  {
+    "question": "How close may you park from a corner",
+    "answer_options": [
+      "15 Ft",
+      "25 Ft",
+      "10 Ft",
+      "50 Ft"
+    ],
+    "correct_answer": "25 Ft"
+  },
+  {
+    "question": "In adverse weather conditions how long does a truck or bus take to stop",
+    "answer_options": [
+      "75%",
+      "50%",
+      "40%",
+      "25%"
+    ],
+    "correct_answer": "25%"
+  },
+  {
+    "question": "What three infractions cause a driver to be penalized with an insurance surcharge",
+    "answer_options": [
+      "No license, registration and insurance",
+      "No inspection, registration and insurance",
+      "Breath test non-compliance, DUI and inspection",
+      "Breath test non-compliance, DUI and liability non-complaints"
+    ],
+    "correct_answer": "Breath test non-compliance, DUI and liability non-complaints"
+  },
+  {
+    "question": "What may happen if a driver's license is suspended due to DUI",
+    "answer_options": [
+      "They must submit to a breath test on demand",
+      "The liability law will be enacted",
+      "They will be labeled a habitual offender",
+      "They may have to install an ignition interlock device"
+    ],
+    "correct_answer": "They may have to install an ignition interlock device"
+  },
+  {
+    "question": "When does a driver get points added to their motor vehicle record",
+    "answer_options": [
+      "Safety belt violation",
+      "Parking violation",
+      "Moving violation",
+      "Insurance surcharge violation"
+    ],
+    "correct_answer": "Moving violation"
+  },
+  {
+    "question": "When driving in bad weather drivers should",
+    "answer_options": [
+      "Increase speed to reach final destination more quickly",
+      "Decrease the 2 seconds rule",
+      "Increase the 2 seconds rule",
+      "None of the above"
+    ],
+    "correct_answer": "Increase the 2 seconds rule"
+  },
+  {
+    "question": "If you are driving behind the school bus and it shows a flashing red light signaling a stop you must",
+    "answer_options": [
+      "Stop at least 25 ft away",
+      "Slow down to 10 mph",
+      "Speed up and pass",
+      "Stop directly behind the bus"
+    ],
+    "correct_answer": "Stop at least 25 ft away"
+  },
+  {
+    "question": "When parking how far must you be from a fire hydrant",
+    "answer_options": [
+      "5 Ft",
+      "10 Ft",
+      "20 Ft",
+      "25 Ft"
+    ],
+    "correct_answer": "10 Ft"
+  },
+  {
+    "question": "When parking how far must you be from a stop sign",
+    "answer_options": [
+      "At 10 ft",
+      "20 Ft",
+      "25 Ft",
+      "50 Ft"
+    ],
+    "correct_answer": "50 Ft"
+  },
+  {
+    "question": "When parking how far must you be from a crosswalk",
+    "answer_options": [
+      "10 Ft",
+      "20 Ft",
+      "25 Ft",
+      "50 Ft"
+    ],
+    "correct_answer": "25 Ft"
+  },
+  {
+    "question": "When parking how far must you be when you park on the opposite side from a fire station",
+    "answer_options": [
+      "25 Ft",
+      "50 Ft",
+      "75 Ft",
+      "100 Ft"
+    ],
+    "correct_answer": "75 Ft"
+  },
+  {
+    "question": "When driving on icy roads how many car lengths should you be from the vehicle you follow if your speed is 30 mph",
+    "answer_options": [
+      "3",
+      "6",
+      "12",
+      "18"
+    ],
+    "correct_answer": "18"
+  },
+  {
+    "question": "Vehicle stopping distances never depend on",
+    "answer_options": [
+      "Your own reaction time",
+      "The time of day",
+      "Condition of your vehicle's brakes",
+      "Condition and type of vehicle tires"
+    ],
+    "correct_answer": "The time of day"
+  },
+  {
+    "question": "What is the proper distance when parallel parking",
+    "answer_options": [
+      "35 Ft",
+      "25 Ft",
+      "22 Ft",
+      "20 Ft"
+    ],
+    "correct_answer": "25 Ft"
+  },
+  {
+    "question": "New Jersey law allows up to three points to be subtracted from your driving record if you commit no moving violations for how long",
+    "answer_options": [
+      "For 1 year from the posted date of the last violation",
+      "For 6 months",
+      "For 8 months",
+      "For 3 years"
+    ],
+    "correct_answer": "For 1 year from the posted date of the last violation"
+  },
+  {
+    "question": "Why would you be attending a DMV driver improvement program",
+    "answer_options": [
+      "To improve your driving",
+      "Because of the point system",
+      "Driving while under the influence of drugs or alcohol",
+      "Because you failed your road test more than twice"
+    ],
+    "correct_answer": "Because of the point system"
+  },
+  {
+    "question": "What state of mind describes a driver who has been driving for a long time resulting in a trans-like state",
+    "answer_options": [
+      "Tired driving",
+      "Road rage",
+      "Habitual offender",
+      "Highway hypnosis"
+    ],
+    "correct_answer": "Highway hypnosis"
+  },
+  {
+    "question": "If you drive 40 mph in the packed snow road what is your minimum safe following distance",
+    "answer_options": [
+      "Four car length",
+      "Eight car lengths",
+      "10 Car lengths",
+      "12 Car lengths"
+    ],
+    "correct_answer": "12 Car lengths"
+  },
+  {
+    "question": "A driver should signal at least how far before his intended turn",
+    "answer_options": [
+      "100 Ft",
+      "1,000 Ft",
+      "50 Ft",
+      "60 Yards"
+    ],
+    "correct_answer": "100 Ft"
+  },
+  {
+    "question": "The motor vehicle registration shall be renewed",
+    "answer_options": [
+      "Every 6 months",
+      "Every year",
+      "Every 3 years",
+      "Every month"
+    ],
+    "correct_answer": "Every year"
+  },
+  {
+    "question": "The inspection sticker on a new vehicle is good for at least",
+    "answer_options": [
+      "12 Months",
+      "18 Months",
+      "24 Months",
+      "36 Months"
+    ],
+    "correct_answer": "24 Months"
+  },
+  {
+    "question": "You must report a lost damage or stolen license within",
+    "answer_options": [
+      "24 Hours",
+      "1 Month",
+      "1 Week",
+      "2 Weeks"
+    ],
+    "correct_answer": "24 Hours"
+  },
+  {
+    "question": "A new vehicle does not get inspected for",
+    "answer_options": [
+      "3 Years",
+      "Every year",
+      "2 Years",
+      "4 Years"
+    ],
+    "correct_answer": "4 Years"
+  },
+  {
+    "question": "If you move into New Jersey from another state how long do you have to inspect your vehicle",
+    "answer_options": [
+      "1 Month",
+      "2 Months",
+      "2 Weeks",
+      "1 Week"
+    ],
+    "correct_answer": "2 Weeks"
+  },
+  {
+    "question": "A probationary license lasts for",
+    "answer_options": [
+      "1 Year",
+      "2 Years",
+      "4 Years",
+      "6 Months"
+    ],
+    "correct_answer": "1 Year"
+  },
+  {
+    "question": "How long is a GDL special learner's permit good for",
+    "answer_options": [
+      "1 Year",
+      "90 Days",
+      "2 Years",
+      "Until you are 17 years old"
+    ],
+    "correct_answer": "2 Years"
+  },
+  {
+    "question": "The holder of a validated GDL permit 21 years of age or older is restricted to what driving hours",
+    "answer_options": [
+      "5:01 A.m to 12:00 a.m",
+      "12:00 A.m to 5:01 a.m",
+      "5:01 A.m to 11 p.m",
+      "No restrictions apply"
+    ],
+    "correct_answer": "No restrictions apply"
+  },
+  {
+    "question": "What are some telltale signs of a drunk driver",
+    "answer_options": [
+      "Weaving between lanes",
+      "Driving slower than the normal traffic flow",
+      "Quick and sudden stops",
+      "All of the above"
+    ],
+    "correct_answer": "All of the above"
+  },
+  {
+    "question": "The best way to talk to other drivers is to",
+    "answer_options": [
+      "Use your horn or lights",
+      "Be court curteous and wave",
+      "Roll down the window and yell",
+      "Motion with your hands"
+    ],
+    "correct_answer": "Use your horn or lights"
+  },
+  {
+    "question": "Unless otherwise noted the speed limit in a school zone is",
+    "answer_options": [
+      "35 Miles per hour",
+      "25 Miles per hour",
+      "20 Miles per hour",
+      "15 Miles per hour"
+    ],
+    "correct_answer": "25 Miles per hour"
+  },
+  {
+    "question": "Your hand should be placed on the steering wheel at what position on the clock",
+    "answer_options": [
+      "10 And 2",
+      "9 And 3",
+      "12 And 6",
+      "2 And 1"
+    ],
+    "correct_answer": "9 And 3"
+  },
+  {
+    "question": "What is a common mistake new drivers make while stopping",
+    "answer_options": [
+      "Pushing the brake too lightly",
+      "Pushing the gas pedal",
+      "Pushing both gas and brake",
+      "Slamming on the brakes"
+    ],
+    "correct_answer": "Slamming on the brakes"
+  },
+  {
+    "question": "What New Jersey law sets top speed limits for certain state highways and all interstates",
+    "answer_options": [
+      "65 Miles per hour",
+      "55 Miles per hour",
+      "50 Miles per hour",
+      "35 Miles per hour"
+    ],
+    "correct_answer": "55 Miles per hour"
+  },
+  {
+    "question": "A motorist approaching an unlit signal should do which of the following",
+    "answer_options": [
+      "Stay where you are until help arrives",
+      "Slow down and go through cautiously",
+      "Yield",
+      "Stop go only when safe"
+    ],
+    "correct_answer": "Stop go only when safe"
+  },
+  {
+    "question": "When parking downhill on a street with a curb on your right your wheels should be facing",
+    "answer_options": [
+      "Straight",
+      "Toward the curb",
+      "Away from the curb",
+      "None of the above"
+    ],
+    "correct_answer": "Toward the curb"
+  },
+  {
+    "question": "When parking uphill on a street with a curb on your right your wheels should be facing",
+    "answer_options": [
+      "Straight",
+      "Toward the curb",
+      "Away from the curb",
+      "None of the above"
+    ],
+    "correct_answer": "Away from the curb"
+  },
+  {
+    "question": "What should a driver do if they are being tailgated",
+    "answer_options": [
+      "Slow down and encourage the following car to pass",
+      "Brake quickly to scare the following vehicle into backing off",
+      "Speed up to increase the distance between you and the vehicle that is following",
+      "Speed up and then resume normal speed"
+    ],
+    "correct_answer": "Slow down and encourage the following car to pass"
+  },
+  {
+    "question": "If you move to New Jersey how long do you have to transfer your basic driver license",
+    "answer_options": [
+      "7 Days or until your out-of-state driver license expires whichever is less",
+      "14 Days or until your out-of-state driver license expires whichever is less",
+      "30 Days or until your out-of-state driver license expires whichever is less",
+      "60 Days or until your out-of-state driver license expires whichever is less"
+    ],
+    "correct_answer": "60 Days or until your out-of-state driver license expires whichever is less"
+  },
+  {
+    "question": "How much time do you have to notify the MVC after an address change",
+    "answer_options": [
+      "7 Days",
+      "10 Days",
+      "14 Days",
+      "30 Days"
+    ],
+    "correct_answer": "7 Days"
+  },
+  {
+    "question": "A motorist with a valid out-of-state commercial driver CDL who moves to New Jersey must apply for a NJ license report and address change within",
+    "answer_options": [
+      "30 Days",
+      "60 Days",
+      "45 Days",
+      "90 Days"
+    ],
+    "correct_answer": "30 Days"
+  },
+  {
+    "question": "How long will your basic license be good for in New Jersey",
+    "answer_options": [
+      "3 Years",
+      "5 Years",
+      "4 Years",
+      "2 Years"
+    ],
+    "correct_answer": "4 Years"
+  },
+  {
+    "question": "Every motor vehicle in New Jersey must have what type of insurance",
+    "answer_options": [
+      "Auto insurance",
+      "Habitual offenders insurance",
+      "Liability insurance",
+      "Implied consent insurance"
+    ],
+    "correct_answer": "Liability insurance"
+  },
+  {
+    "question": "When you move within the state of New Jersey how long do you have to change your driver's license",
+    "answer_options": [
+      "1 Week",
+      "10 Days",
+      "2 Weeks",
+      "60 Days"
+    ],
+    "correct_answer": "1 Week"
+  },
+  {
+    "question": "When you move into New Jersey from another state how long do you have to change your driver's license",
+    "answer_options": [
+      "1 Week",
+      "10 Days",
+      "2 Weeks",
+      "60 Days"
+    ],
+    "correct_answer": "60 Days"
+  },
+  {
+    "question": "If a student fails the driving test the first time how long must he wait before he can take it again",
+    "answer_options": [
+      "5 Days",
+      "7 Days",
+      "At least 2 weeks",
+      "30 Days"
+    ],
+    "correct_answer": "At least 2 weeks"
+  },
+  {
+    "question": "What is a habitual offender",
+    "answer_options": [
+      "Any person whose license has been suspended once",
+      "Any person whose license has been suspended two times in two years",
+      "Any person whose license has been suspended three times in 3 years",
+      "Any person whose license has been suspended I time in two years"
+    ],
+    "correct_answer": "Any person whose license has been suspended three times in 3 years"
+  },
+  {
+    "question": "In New Jersey when can studded snow tires legally be used",
+    "answer_options": [
+      "From December 15th to April 1st",
+      "From November 15th to April 1st",
+      "From November 15th to March 1st",
+      "From October 15th to April 1st"
+    ],
+    "correct_answer": "From November 15th to April 1st"
+  },
+  {
+    "question": "How long do you have to notify the MVC after a name change",
+    "answer_options": [
+      "7 Days",
+      "10 Days",
+      "14 Days",
+      "30 Days"
+    ],
+    "correct_answer": "14 Days"
+  },
+  {
+    "question": "To obtain a special learner's permit you must be at least",
+    "answer_options": [
+      "17",
+      "Pass a written test, eye test and 6 hours of behind-the-wheel",
+      "Pass a written test only",
+      "Pass a written and eye test"
+    ],
+    "correct_answer": "Pass a written test, eye test and 6 hours of behind-the-wheel"
+  },
+  {
+    "question": "What is the legal age to drive a moped in New Jersey",
+    "answer_options": [
+      "14",
+      "13",
+      "15",
+      "12"
+    ],
+    "correct_answer": "15"
+  },
+  {
+    "question": "The holder of a validated special learner's permit must not drive between what hours",
+    "answer_options": [
+      "5:00 A.m to 11:00 p.m",
+      "11:01 P.m to 5:00 a.m",
+      "5:00 A.m to 12:01 p.m",
+      "12:00 A.m to 5:01 a.m"
+    ],
+    "correct_answer": "11:01 P.m to 5:00 a.m"
+  },
+  {
+    "question": "How old must you be to get a special learner's permit",
+    "answer_options": [
+      "15",
+      "18",
+      "16",
+      "17"
+    ],
+    "correct_answer": "16"
+  },
+  {
+    "question": "What is the minimum age you can get a probationary driver license",
+    "answer_options": [
+      "21",
+      "17",
+      "16",
+      "18"
+    ],
+    "correct_answer": "17"
+  },
+  {
+    "question": "What is the minimum time of supervised driving you must have with your special learner's permit before you can get a probationary driver license",
+    "answer_options": [
+      "At least 6 months",
+      "1 Year",
+      "2 Years",
+      "60 Days"
+    ],
+    "correct_answer": "At least 6 months"
+  },
+  {
+    "question": "How long must you drive with the probationary driver license before you can apply for a basic driver license",
+    "answer_options": [
+      "3 Months",
+      "1 Year",
+      "6 Months",
+      "2 Years"
+    ],
+    "correct_answer": "1 Year"
+  },
+  {
+    "question": "Permit holders older than 21 must have this much supervised driving prior to taking the road test",
+    "answer_options": [
+      "6 Months",
+      "3 Months",
+      "1 Month",
+      "Two weeks"
+    ],
+    "correct_answer": "3 Months"
+  },
+  {
+    "question": "Your eyesight must be at least this in one eye or both eyes to obtain a special learner's permit",
+    "answer_options": [
+      "20/50",
+      "20/20",
+      "20/40",
+      "20/70"
+    ],
+    "correct_answer": "20/50"
+  },
+  {
+    "question": "Who must have a reflector, red decal on the front and back license plates while driving",
+    "answer_options": [
+      "Both special learner's permit and probationary driver license drivers",
+      "Only special learner's permit drivers",
+      "All drivers under the age of 21",
+      "All family cars must have red decals permanently placed on them"
+    ],
+    "correct_answer": "Both special learner's permit and probationary driver license drivers"
+  },
+  {
+    "question": "If an examination permit or probationary holder is 21 or older what rules must they follow",
+    "answer_options": [
+      "Same as GDLB",
+      "Hour restrictions of the GDL only",
+      "Neither hour nor passenger restrictions of the GDL",
+      "Passenger restrictions of the GDL only"
+    ],
+    "correct_answer": "Neither hour nor passenger restrictions of the GDL"
+  },
+  {
+    "question": "You can practice driving with a valid special learner's permit",
+    "answer_options": [
+      "Between 12:01 a.m and 5:00 a.m",
+      "Between 9:00 a.m and 9:00 p.m",
+      "Between 5:00 a.m and 11:00 p.m",
+      "Anytime"
+    ],
+    "correct_answer": "Between 5:00 a.m and 11:00 p.m"
+  },
+  {
+    "question": "Must be at least __ years old to register a motor vehicle",
+    "answer_options": [
+      "17",
+      "16",
+      "15",
+      "21"
+    ],
+    "correct_answer": "17"
+  },
+  {
+    "question": "How many passengers may accompany the holder of a validated GDL special learner's permit in the vehicle",
+    "answer_options": [
+      "Two",
+      "None",
+      "Immediate family members and one non-member",
+      "Any number of passengers"
+    ],
+    "correct_answer": "Immediate family members and one non-member"
+  },
+  {
+    "question": "What tests must you pass to get a special learner's permit",
+    "answer_options": [
+      "I test and written test",
+      "Road test",
+      "Written test",
+      "All of the above"
+    ],
+    "correct_answer": "I test and written test"
+  },
+  {
+    "question": "When driving on a permit a 16-year-old must be accompanied by a licensed driver who",
+    "answer_options": [
+      "Is over 18 years old",
+      "Is over 21 years old",
+      "Has never had an accident",
+      "Is over 21 years old and have at least 3 years of driving experiences"
+    ],
+    "correct_answer": "Is over 21 years old and have at least 3 years of driving experiences"
+  },
+  {
+    "question": "If a passenger in the front seat over 18 years old is caught not wearing a seat belt who is held responsible",
+    "answer_options": [
+      "The driver",
+      "Both passenger and the driver",
+      "Passenger only",
+      "All of the above"
+    ],
+    "correct_answer": "Passenger only"
+  },
+  {
+    "question": "If a driver reaches a BC of 0.05% after drinking alcohol the chance of causing a crash is what",
+    "answer_options": [
+      "5 Times",
+      "6 Times",
+      "2 Times",
+      "25 Times"
+    ],
+    "correct_answer": "2 Times"
+  },
+  {
+    "question": "What is equal in alcohol content to two 12 oz bottles of beer",
+    "answer_options": [
+      "A few shots",
+      "One bottle of wine",
+      "One 5 oz glass of wine",
+      "Two 1.5 ouncez amounts of 86 proof liquor"
+    ],
+    "correct_answer": "Two 1.5 ouncez amounts of 86 proof liquor"
+  },
+  {
+    "question": "If a driver reaches a BAC of 0.10% after drinking alcohol their chance of causing a crash is what",
+    "answer_options": [
+      "5 Times",
+      "6 Times",
+      "2 Times",
+      "25 Times"
+    ],
+    "correct_answer": "6 Times"
+  },
+  {
+    "question": "If you have a blood alcohol concentration of 0.15% your chances of having an accident is",
+    "answer_options": [
+      "Six times",
+      "Double",
+      "25 Times",
+      "Three times"
+    ],
+    "correct_answer": "25 Times"
+  },
+  {
+    "question": "In New Jersey persons under 21 years of age are considered under the influence DUI when their BAC is",
+    "answer_options": [
+      "0.01",
+      "0.05",
+      "0.10",
+      "All of the above"
+    ],
+    "correct_answer": "All of the above"
+  },
+  {
+    "question": "A 5 oz glass of wine contains the same amount of alcohol as",
+    "answer_options": [
+      "One pint of whiskey",
+      "A gallon of wine",
+      "A six-pack of beer",
+      "1 12 Oz can of beer"
+    ],
+    "correct_answer": "1 12 Oz can of beer"
+  },
+  {
+    "question": "What could happen to the host if a guest who has been drinking alcohol leaves their house and becomes involved in an accident",
+    "answer_options": [
+      "Lawsuit",
+      "Prison",
+      "Kelly finds",
+      "Arrest"
+    ],
+    "correct_answer": "Lawsuit"
+  },
+  {
+    "question": "What is the best way to reduce the risk of a crash after drinking alcohol",
+    "answer_options": [
+      "Designated driver",
+      "Sleep over",
+      "Do not drive after drinking",
+      "Leave your keys at the door"
+    ],
+    "correct_answer": "Do not drive after drinking"
+  },
+  {
+    "question": "Studies show that the greatest number of people arrested for drunk driving have been drinking",
+    "answer_options": [
+      "Beer",
+      "Wine",
+      "Whiskey",
+      "Mixed drinks"
+    ],
+    "correct_answer": "Beer"
+  },
+  {
+    "question": "If a person has been drinking what can sober them up",
+    "answer_options": [
+      "Drinking lots of water",
+      "Taking a hot shower",
+      "Time",
+      "A full meal"
+    ],
+    "correct_answer": "Time"
+  },
+  {
+    "question": "What should be your speed limit on non-posted rural roads",
+    "answer_options": [
+      "25 Mph",
+      "35 Mph",
+      "45 Mph",
+      "50 Mph"
+    ],
+    "correct_answer": "50 Mph"
+  },
+  {
+    "question": "In order to steer the car while moving backward you should turn",
+    "answer_options": [
+      "The steering wheel in the direction opposite the way you want the rear of the car to go",
+      "The steering wheel in the direction you want the rear of the car to go",
+      "The steering wheel clockwise for the rear of the car to go to the left",
+      "The steering wheel in the direction you want the front of the car to go"
+    ],
+    "correct_answer": "The steering wheel in the direction you want the rear of the car to go"
+  },
+  {
+    "question": "You should only use your high beam headlights when vehicles are",
+    "answer_options": [
+      "Quarter-mile ahead of you",
+      "When driving in the fog",
+      "In inclement weather",
+      "When vehicles are one half-mile ahead of you"
+    ],
+    "correct_answer": "When vehicles are one half-mile ahead of you"
+  },
+  {
+    "question": "To stop a car when skidding on a slippery road you should",
+    "answer_options": [
+      "Elate while turning the steering wheel",
+      "Apply gradual pressure to the brake",
+      "Apply no brakes at all",
+      "Apply pumping action to the brake"
+    ],
+    "correct_answer": "Apply pumping action to the brake"
+  },
+  {
+    "question": "After you drive through a deep puddle of water",
+    "answer_options": [
+      "Pump your brakes to test them",
+      "Raise your engine to dry it out",
+      "Apply your brakes hard to test them",
+      "Speed up to dry your tires"
+    ],
+    "correct_answer": "Pump your brakes to test them"
+  },
+  {
+    "question": "What should you do when your car goes into a skid",
+    "answer_options": [
+      "Take your foot off the gas",
+      "Turn in the direction the rear of the car is going",
+      "Do not break suddenly during the skid",
+      "All of the answers"
+    ],
+    "correct_answer": "All of the answers"
+  },
+  {
+    "question": "For sharper turns what steering technique should you use while turning your car",
+    "answer_options": [
+      "Push and pull",
+      "Hand over hand",
+      "Continuous",
+      "Three and nine steering"
+    ],
+    "correct_answer": "Hand over hand"
+  },
+  {
+    "question": "What lights should you use during fog",
+    "answer_options": [
+      "Low beams",
+      "High beams",
+      "No lights",
+      "Hazard lights"
+    ],
+    "correct_answer": "Low beams"
+  },
+  {
+    "question": "As you drive you must turn your headlights on when",
+    "answer_options": [
+      "You turn your wipers on",
+      "1/2 Hour after sunset",
+      "1/2 Hour before sunrise",
+      "All of the above"
+    ],
+    "correct_answer": "All of the above"
+  },
+  {
+    "question": "It is important to slow down",
+    "answer_options": [
+      "On narrow or winding roads",
+      "At intersections or railroad crossings",
+      "When the road is wet or slippery",
+      "All of the above"
+    ],
+    "correct_answer": "All of the above"
+  },
+  {
+    "question": "You needn't stop your vehicle for a frozen dessert truck when",
+    "answer_options": [
+      "It shows flashing red lights",
+      "It shows a stop signal arm",
+      "A person is crossing the roadway to or from the frozen dessert truck",
+      "On a dual highway if you're on the other side of a safety island or median from the frozen dessert truck"
+    ],
+    "correct_answer": "On a dual highway if you're on the other side of a safety island or median from the frozen dessert truck"
+  },
+  {
+    "question": "When driving on major highways",
+    "answer_options": [
+      "Stay alert",
+      "Keep your eyes moving",
+      "Be ready to react to road hazards",
+      "All of the above"
+    ],
+    "correct_answer": "All of the above"
+  },
+  {
+    "question": "If your windshield wiper stopped suddenly during rain or snow you should",
+    "answer_options": [
+      "Slowdown",
+      "Turn on emergency flashes",
+      "Break and pull off the road",
+      "All of the above"
+    ],
+    "correct_answer": "All of the above"
+  },
+  {
+    "question": "The papers that are needed for your road test",
+    "answer_options": [
+      "Valid vehicle registration",
+      "Valid examination permit",
+      "Valid insurance ID card",
+      "All of the above"
+    ],
+    "correct_answer": "All of the above"
+  },
+  {
+    "question": "For the road test an applicant must have a vehicle with a valid registration, a valid inspection sticker and what other document",
+    "answer_options": [
+      "A valid driver's license",
+      "A valid birth certificate",
+      "A valid student ED card",
+      "A valid insurance ID card"
+    ],
+    "correct_answer": "A valid insurance ID card"
+  },
+  {
+    "question": "Who gets the ticket if you get pulled over for a motor vehicle infraction while practicing driving with your probationary driver's license",
+    "answer_options": [
+      "Both the student driver and the adult supervising",
+      "The student driver",
+      "The adult supervising",
+      "The parents of the student driver"
+    ],
+    "correct_answer": "Both the student driver and the adult supervising"
+  },
+  {
+    "question": "To obtain a New Jersey driver license or non driver ID card you must present",
+    "answer_options": [
+      "Proof of age",
+      "Proof of address",
+      "Proof of legal US presence",
+      "All of the above"
+    ],
+    "correct_answer": "All of the above"
+  },
+  {
+    "question": "MVC may terminate your road test before it starts because of",
+    "answer_options": [
+      "An unsafe vehicle",
+      "A center console or other equipment in your vehicle that obstructs the examiner's access to the brake pedal",
+      "Missing seat belts",
+      "All of the above"
+    ],
+    "correct_answer": "All of the above"
+  },
+  {
+    "question": "DUI means",
+    "answer_options": [
+      "Driving while using drugs or alcohol",
+      "Driving while drunk",
+      "Driving while using drugs",
+      "All of the above"
+    ],
+    "correct_answer": "Driving while using drugs or alcohol"
+  },
+  {
+    "question": "What indicates underinflated tires",
+    "answer_options": [
+      "Excessive wear on the edges of the tires",
+      "Excessive wear on the side walls",
+      "Excessive wear on the center of the tire",
+      "None of the above"
+    ],
+    "correct_answer": "Excessive wear on the edges of the tires"
+  },
+  {
+    "question": "Which of the following are the three types of intersections",
+    "answer_options": [
+      "Controlled uncontrolled and diamond",
+      "Blind controlled and diamond",
+      "Controlled uncontrolled and blind",
+      "Controlled uncontrolled and clover leaf"
+    ],
+    "correct_answer": "Controlled uncontrolled and blind"
+  },
+  {
+    "question": "What are airbags",
+    "answer_options": [
+      "Permanent restraint system",
+      "Primary offense",
+      "Supplemental restraint system",
+      "Secondary offense"
+    ],
+    "correct_answer": "Supplemental restraint system"
+  },
+  {
+    "question": "The implied consent law is",
+    "answer_options": [
+      "Permission for someone to drive your vehicle",
+      "All passengers must wear their seat belts",
+      "You agree to a breath test when under arrest and suspected of drinking and driving",
+      "None of the above"
+    ],
+    "correct_answer": "You agree to a breath test when under arrest and suspected of drinking and driving"
+  },
+  {
+    "question": "The area where a motorist cannot see behind his or her vehicle on both sides through the mirrors",
+    "answer_options": [
+      "Space cushion",
+      "Safety zone",
+      "Vision spots",
+      "Blind spots"
+    ],
+    "correct_answer": "Blind spots"
+  },
+  {
+    "question": "The implied consent law means",
+    "answer_options": [
+      "Driver agrees to take the breath test",
+      "Driver is of legal age",
+      "Driver agrees to cooperate",
+      "It means nothing"
+    ],
+    "correct_answer": "Driver agrees to take the breath test"
+  },
+  {
+    "question": "Hydroplaning means",
+    "answer_options": [
+      "Road surfaces become slippery during the first minutes of rainfall",
+      "A car will skid when water is deeper than the tire tread",
+      "Brakes fail to hold when cars are driven through deep water",
+      "Tire treads lose contact with a wet road"
+    ],
+    "correct_answer": "Tire treads lose contact with a wet road"
+  },
+  {
+    "question": "The area around all four sides of a truck where the truck's driver cannot see you is called",
+    "answer_options": [
+      "The no zone",
+      "Blind spots",
+      "From side view mirrors",
+      "Space cushion",
+      "Hydroplaning"
+    ],
+    "correct_answer": "The no zone"
+  },
+  {
+    "question": "Driving is what according to state law",
+    "answer_options": [
+      "A right of passage",
+      "A citizen's right",
+      "A privilege",
+      "An opportunity"
+    ],
+    "correct_answer": "A privilege"
+  },
+  {
+    "question": "As you drive you're required to stop your vehicle",
+    "answer_options": [
+      "At an intersection with a stop sign",
+      "Where there is a red light",
+      "When a traffic officer orders you to stop",
+      "All of the above"
+    ],
+    "correct_answer": "All of the above"
+  },
+  {
+    "question": "You must yield for emergency vehicles",
+    "answer_options": [
+      "Never",
+      "When you see a flashing red or blue light or hear a siren",
+      "Only when other vehicles yield",
+      "None of the above"
+    ],
+    "correct_answer": "When you see a flashing red or blue light or hear a siren"
+  },
+  {
+    "question": "You may drive on public or private property to avoid a traffic sign or signal only",
+    "answer_options": [
+      "If the driver stops the vehicle before crossing the sidewalk",
+      "Only with permission of the property owner",
+      "Anytime",
+      "When directed to do so by a police officer"
+    ],
+    "correct_answer": "When directed to do so by a police officer"
+  },
+  {
+    "question": "The New Jersey speed limit in a business or residential area unless otherwise posted is",
+    "answer_options": [
+      "20 Mph",
+      "25 Mph",
+      "30 Mph",
+      "35 Mph"
+    ],
+    "correct_answer": "25 Mph"
+  },
+  {
+    "question": "If a collision is possible you should",
+    "answer_options": [
+      "I choose to hit something that will give way rather than something that's rigid",
+      "Choose to hit something that's standing still rather than something moving toward you",
+      "If you have to hit anything try to make it a glancing blow or a sideswipe",
+      "All of the above"
+    ],
+    "correct_answer": "All of the above"
+  },
+  {
+    "question": "Seat belts can improve a motorist's chance of surviving a crash by what percent",
+    "answer_options": [
+      "100%",
+      "50%",
+      "70%",
+      "60%"
+    ],
+    "correct_answer": "60%"
+  },
+  {
+    "question": "At what age must children ride in a federally approved safety or booster seat in the rear of the vehicle",
+    "answer_options": [
+      "Children two and under",
+      "Children four and under",
+      "Children under age 5 and over 80 lbs",
+      "Children under age 8 and under 80 lbs"
+    ],
+    "correct_answer": "Children under age 8 and under 80 lbs"
+  }
+];
+
+    const state = {
+      mode: null,
+      questions: [],
+      currentIndex: 0,
+      answers: []
+    };
+
+    const welcomeEl = document.getElementById("welcome");
+    const quizEl = document.getElementById("quiz");
+    const summaryEl = document.getElementById("summary");
+    const questionTextEl = document.getElementById("question-text");
+    const optionsEl = document.getElementById("options");
+    const progressEl = document.getElementById("progress");
+    const checkBtn = document.getElementById("check-btn");
+    const nextBtn = document.getElementById("next-btn");
+    const quitBtn = document.getElementById("quit-btn");
+    const summaryStatsEl = document.getElementById("summary-stats");
+    const summaryListEl = document.getElementById("summary-list");
+    const restartBtn = document.getElementById("restart-btn");
+
+    function shuffle(array) {
+      const copy = array.slice();
+      for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function canonical(text) {
+      return text
+        .toLowerCase()
+        .replace(/^[a-d]\s+/i, "")
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim()
+        .replace(/\s+/g, " ");
+    }
+
+    function findCorrectIndex(question) {
+      const correctCanonical = canonical(question.correct_answer);
+      let index = question.answer_options.findIndex(
+        (option) => canonical(option) === correctCanonical
+      );
+      if (index !== -1) {
+        return index;
+      }
+
+      const labelMatch = question.correct_answer.trim().match(/^[a-d]/i);
+      if (labelMatch) {
+        const label = labelMatch[0].toLowerCase();
+        index = question.answer_options.findIndex((option) =>
+          option.trim().toLowerCase().startsWith(label)
+        );
+      }
+
+      return index === -1 ? null : index;
+    }
+
+    function showSection(section) {
+      welcomeEl.classList.add("hidden");
+      quizEl.classList.add("hidden");
+      summaryEl.classList.add("hidden");
+      section.classList.remove("hidden");
+    }
+
+    function startMode(mode) {
+      state.mode = mode;
+      const allQuestions = QUESTIONS.map((q, index) => ({ ...q, originalIndex: index }));
+      if (mode === "set1") {
+        state.questions = allQuestions.slice(0, 50);
+      } else if (mode === "set2") {
+        state.questions = allQuestions.slice(50, 100);
+      } else if (mode === "set3") {
+        state.questions = allQuestions.slice(100, 150);
+      } else if (mode === "random25") {
+        const randomSet = shuffle(allQuestions);
+        state.questions = randomSet.slice(0, Math.min(25, randomSet.length));
+      } else if (mode === "random50") {
+        const randomSet = shuffle(allQuestions);
+        state.questions = randomSet.slice(0, Math.min(50, randomSet.length));
+      } else if (mode === "random5") {
+        const randomSet = shuffle(allQuestions);
+        state.questions = randomSet.slice(0, Math.min(5, randomSet.length));
+      } else {
+        state.questions = allQuestions.slice(150);
+      }
+      state.currentIndex = 0;
+      state.answers = [];
+      showSection(quizEl);
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const current = state.questions[state.currentIndex];
+      const questionNumber = state.currentIndex + 1;
+      questionTextEl.textContent = "";
+      const count = document.createElement("span");
+      count.className = "muted question-count";
+      count.textContent = `${questionNumber}/${state.questions.length} `;
+      questionTextEl.appendChild(count);
+      questionTextEl.appendChild(document.createTextNode(current.question));
+      progressEl.textContent = "";
+      optionsEl.innerHTML = "";
+      checkBtn.disabled = true;
+      nextBtn.classList.add("hidden");
+
+      current.answer_options.forEach((option, idx) => {
+        const label = document.createElement("label");
+        label.className = "option";
+        const input = document.createElement("input");
+        input.type = "radio";
+        input.name = "option";
+        input.value = idx;
+        input.addEventListener("change", () => {
+          checkBtn.disabled = false;
+          Array.from(optionsEl.children).forEach((child) => child.classList.remove("selected"));
+          label.classList.add("selected");
+        });
+        const text = document.createElement("span");
+        text.textContent = option;
+        label.appendChild(input);
+        label.appendChild(text);
+        optionsEl.appendChild(label);
+      });
+    }
+
+    function handleCheck() {
+      const selectedInput = optionsEl.querySelector("input[name=option]:checked");
+      if (!selectedInput) return;
+      const selectedIndex = Number(selectedInput.value);
+      const current = state.questions[state.currentIndex];
+      const correctIndex = findCorrectIndex(current);
+      const isCorrect = correctIndex !== null && selectedIndex === correctIndex;
+      const optionLabels = Array.from(optionsEl.querySelectorAll(".option"));
+
+      state.answers.push({
+        question: current,
+        selectedIndex,
+        correctIndex,
+        isCorrect
+      });
+
+
+      if (isCorrect) {
+        optionLabels[selectedIndex]?.classList.add("correct");
+      } else {
+        optionLabels[selectedIndex]?.classList.add("incorrect");
+        if (correctIndex !== null) {
+          optionLabels[correctIndex]?.classList.add("correct");
+        }
+      }
+
+      Array.from(optionsEl.querySelectorAll("input")).forEach((input) => {
+        input.disabled = true;
+      });
+      nextBtn.classList.remove("hidden");
+      checkBtn.disabled = true;
+    }
+
+    function handleNext() {
+      if (state.currentIndex < state.questions.length - 1) {
+        state.currentIndex += 1;
+        renderQuestion();
+      } else {
+        renderSummary();
+      }
+    }
+
+    function renderSummary() {
+      showSection(summaryEl);
+      const total = state.answers.length;
+      const correct = state.answers.filter((entry) => entry.isCorrect).length;
+      const percent = total ? Math.round((correct / total) * 100) : 0;
+      const prefix = percent >= 80 ? "✅ You passed." : "❌ Try again.";
+      summaryStatsEl.textContent = `${prefix} You scored ${correct} out of ${total} (${percent}%).`;
+      summaryListEl.innerHTML = "";
+
+      state.answers.forEach((entry, index) => {
+        const item = document.createElement("div");
+        item.className = "summary-item";
+        const questionLabel = document.createElement("strong");
+        questionLabel.textContent = `${index + 1}. ${entry.question.question}`;
+        const userAnswer = entry.question.answer_options[entry.selectedIndex] || "No answer";
+        const correctAnswer =
+          entry.correctIndex === null
+            ? entry.question.correct_answer
+            : entry.question.answer_options[entry.correctIndex];
+        const userLine = document.createElement("p");
+        userLine.className = "muted";
+        if (entry.isCorrect) {
+          userLine.textContent = `✅ ${correctAnswer}`;
+        } else {
+          userLine.textContent = `❌ ${userAnswer}`;
+        }
+        const correctLine = document.createElement("p");
+        correctLine.className = "muted";
+        correctLine.textContent = `✅ ${correctAnswer}`;
+        item.appendChild(questionLabel);
+        item.appendChild(userLine);
+        if (!entry.isCorrect) {
+          item.appendChild(correctLine);
+        }
+        summaryListEl.appendChild(item);
+      });
+    }
+
+    document.querySelectorAll(".mode-card").forEach((card) => {
+      card.addEventListener("click", () => startMode(card.dataset.mode));
+    });
+
+    checkBtn.addEventListener("click", handleCheck);
+    nextBtn.addEventListener("click", handleNext);
+    quitBtn.addEventListener("click", () => showSection(welcomeEl));
+    restartBtn.addEventListener("click", () => showSection(welcomeEl));
+  </script>
+</body>
+</html>

@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Question Trainer</title>
+  <style>
+    :root {
+      --bg: #f4f1ec;
+      --ink: #1e1b16;
+      --muted: #6c5f4b;
+      --accent: #c96b3a;
+      --accent-2: #2d6a4f;
+      --card: #fffaf3;
+      --border: #e0d7c8;
+      --shadow: 0 10px 30px rgba(30, 27, 22, 0.08);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 10%, rgba(201, 107, 58, 0.15), transparent 50%),
+        radial-gradient(circle at 90% 20%, rgba(45, 106, 79, 0.12), transparent 45%),
+        var(--bg);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 32px 16px;
+    }
+
+    .app {
+      width: min(880px, 100%);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .app::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(135deg, rgba(201, 107, 58, 0.08), transparent 45%),
+        linear-gradient(315deg, rgba(45, 106, 79, 0.08), transparent 55%);
+      pointer-events: none;
+    }
+
+    .content {
+      position: relative;
+      z-index: 1;
+    }
+
+    h1, h2, h3 {
+      margin: 0 0 16px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    p {
+      margin: 0 0 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .mode-grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      margin-top: 24px;
+    }
+
+    .mode-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      background: #fff;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      display: grid;
+      gap: 8px;
+    }
+
+    .mode-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(30, 27, 22, 0.12);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .hidden { display: none; }
+
+    .question-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .progress {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .options {
+      display: grid;
+      gap: 12px;
+      margin: 20px 0 24px;
+    }
+
+    .option {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #fff;
+      cursor: pointer;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+
+    .option input { margin: 0; }
+
+    .option.selected {
+      border-color: var(--accent);
+      background: rgba(201, 107, 58, 0.08);
+    }
+
+    .option.correct {
+      border-color: rgba(45, 106, 79, 0.7);
+      background: rgba(45, 106, 79, 0.12);
+    }
+
+    .option.incorrect {
+      border-color: rgba(201, 107, 58, 0.7);
+      background: rgba(201, 107, 58, 0.12);
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 12px 20px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+      font-family: inherit;
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    button.secondary {
+      background: var(--accent-2);
+      color: white;
+    }
+
+    button.ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .summary-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+      max-height: 320px;
+      overflow: auto;
+      padding-right: 6px;
+    }
+
+    .summary-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      background: #fff;
+    }
+
+    .summary-item .muted {
+      margin: 4px 0;
+    }
+
+    .summary-item strong {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .question-count {
+      margin-right: 8px;
+    }
+
+    @media (max-width: 600px) {
+      .app { padding: 22px; }
+      button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="content">
+      <section id="welcome">
+        <h1>Knowledge Check</h1>
+        <p>Select a mode to begin testing yourself on the question set. Your results will be summarized at the end.</p>
+        <div class="mode-grid">
+          <button class="mode-card" data-mode="set1" type="button">
+            <h3>Questions 1-50</h3>
+            <p class="muted">First 50 questions in order.</p>
+          </button>
+          <button class="mode-card" data-mode="set2" type="button">
+            <h3>Questions 51-100</h3>
+            <p class="muted">Next 50 questions in order.</p>
+          </button>
+          <button class="mode-card" data-mode="set3" type="button">
+            <h3>Questions 101-150</h3>
+            <p class="muted">Third set of 50 questions.</p>
+          </button>
+          <button class="mode-card" data-mode="set4" type="button">
+            <h3>Questions 151+</h3>
+            <p class="muted">Remaining questions.</p>
+          </button>
+          <button class="mode-card" data-mode="random25" type="button">
+            <h3>Random 25</h3>
+            <p class="muted">A 25-question randomized session.</p>
+          </button>
+          <button class="mode-card" data-mode="random50" type="button">
+            <h3>Random 50</h3>
+            <p class="muted">A 50-question randomized session.</p>
+          </button>
+          <button class="mode-card" data-mode="random5" type="button">
+            <h3>Random 5</h3>
+            <p class="muted">A 5-question randomized session.</p>
+          </button>
+        </div>
+      </section>
+
+      <section id="quiz" class="hidden">
+        <div class="question-header">
+          <h2 id="question-text"></h2>
+          <span class="progress" id="progress"></span>
+        </div>
+        <form id="options" class="options"></form>
+        <div class="actions">
+          <button id="check-btn" class="primary" type="button" disabled>Check answer</button>
+          <button id="next-btn" class="secondary hidden" type="button">Next</button>
+          <button id="quit-btn" class="ghost" type="button">Quit</button>
+        </div>
+      </section>
+
+      <section id="summary" class="hidden">
+        <h2>Session Summary</h2>
+        <p id="summary-stats"></p>
+        <div class="summary-list" id="summary-list"></div>
+        <div class="actions" style="margin-top: 24px;">
+          <button id="restart-btn" class="primary" type="button">Start over</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const QUESTIONS = __QUESTIONS__;
+
+    const state = {
+      mode: null,
+      questions: [],
+      currentIndex: 0,
+      answers: []
+    };
+
+    const welcomeEl = document.getElementById("welcome");
+    const quizEl = document.getElementById("quiz");
+    const summaryEl = document.getElementById("summary");
+    const questionTextEl = document.getElementById("question-text");
+    const optionsEl = document.getElementById("options");
+    const progressEl = document.getElementById("progress");
+    const checkBtn = document.getElementById("check-btn");
+    const nextBtn = document.getElementById("next-btn");
+    const quitBtn = document.getElementById("quit-btn");
+    const summaryStatsEl = document.getElementById("summary-stats");
+    const summaryListEl = document.getElementById("summary-list");
+    const restartBtn = document.getElementById("restart-btn");
+
+    function shuffle(array) {
+      const copy = array.slice();
+      for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function canonical(text) {
+      return text
+        .toLowerCase()
+        .replace(/^[a-d]\s+/i, "")
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim()
+        .replace(/\s+/g, " ");
+    }
+
+    function findCorrectIndex(question) {
+      const correctCanonical = canonical(question.correct_answer);
+      let index = question.answer_options.findIndex(
+        (option) => canonical(option) === correctCanonical
+      );
+      if (index !== -1) {
+        return index;
+      }
+
+      const labelMatch = question.correct_answer.trim().match(/^[a-d]/i);
+      if (labelMatch) {
+        const label = labelMatch[0].toLowerCase();
+        index = question.answer_options.findIndex((option) =>
+          option.trim().toLowerCase().startsWith(label)
+        );
+      }
+
+      return index === -1 ? null : index;
+    }
+
+    function showSection(section) {
+      welcomeEl.classList.add("hidden");
+      quizEl.classList.add("hidden");
+      summaryEl.classList.add("hidden");
+      section.classList.remove("hidden");
+    }
+
+    function startMode(mode) {
+      state.mode = mode;
+      const allQuestions = QUESTIONS.map((q, index) => ({ ...q, originalIndex: index }));
+      if (mode === "set1") {
+        state.questions = allQuestions.slice(0, 50);
+      } else if (mode === "set2") {
+        state.questions = allQuestions.slice(50, 100);
+      } else if (mode === "set3") {
+        state.questions = allQuestions.slice(100, 150);
+      } else if (mode === "random25") {
+        const randomSet = shuffle(allQuestions);
+        state.questions = randomSet.slice(0, Math.min(25, randomSet.length));
+      } else if (mode === "random50") {
+        const randomSet = shuffle(allQuestions);
+        state.questions = randomSet.slice(0, Math.min(50, randomSet.length));
+      } else if (mode === "random5") {
+        const randomSet = shuffle(allQuestions);
+        state.questions = randomSet.slice(0, Math.min(5, randomSet.length));
+      } else {
+        state.questions = allQuestions.slice(150);
+      }
+      state.currentIndex = 0;
+      state.answers = [];
+      showSection(quizEl);
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const current = state.questions[state.currentIndex];
+      const questionNumber = state.currentIndex + 1;
+      questionTextEl.textContent = "";
+      const count = document.createElement("span");
+      count.className = "muted question-count";
+      count.textContent = `${questionNumber}/${state.questions.length} `;
+      questionTextEl.appendChild(count);
+      questionTextEl.appendChild(document.createTextNode(current.question));
+      progressEl.textContent = "";
+      optionsEl.innerHTML = "";
+      checkBtn.disabled = true;
+      nextBtn.classList.add("hidden");
+
+      current.answer_options.forEach((option, idx) => {
+        const label = document.createElement("label");
+        label.className = "option";
+        const input = document.createElement("input");
+        input.type = "radio";
+        input.name = "option";
+        input.value = idx;
+        input.addEventListener("change", () => {
+          checkBtn.disabled = false;
+          Array.from(optionsEl.children).forEach((child) => child.classList.remove("selected"));
+          label.classList.add("selected");
+        });
+        const text = document.createElement("span");
+        text.textContent = option;
+        label.appendChild(input);
+        label.appendChild(text);
+        optionsEl.appendChild(label);
+      });
+    }
+
+    function handleCheck() {
+      const selectedInput = optionsEl.querySelector("input[name=option]:checked");
+      if (!selectedInput) return;
+      const selectedIndex = Number(selectedInput.value);
+      const current = state.questions[state.currentIndex];
+      const correctIndex = findCorrectIndex(current);
+      const isCorrect = correctIndex !== null && selectedIndex === correctIndex;
+      const optionLabels = Array.from(optionsEl.querySelectorAll(".option"));
+
+      state.answers.push({
+        question: current,
+        selectedIndex,
+        correctIndex,
+        isCorrect
+      });
+
+
+      if (isCorrect) {
+        optionLabels[selectedIndex]?.classList.add("correct");
+      } else {
+        optionLabels[selectedIndex]?.classList.add("incorrect");
+        if (correctIndex !== null) {
+          optionLabels[correctIndex]?.classList.add("correct");
+        }
+      }
+
+      Array.from(optionsEl.querySelectorAll("input")).forEach((input) => {
+        input.disabled = true;
+      });
+      nextBtn.classList.remove("hidden");
+      checkBtn.disabled = true;
+    }
+
+    function handleNext() {
+      if (state.currentIndex < state.questions.length - 1) {
+        state.currentIndex += 1;
+        renderQuestion();
+      } else {
+        renderSummary();
+      }
+    }
+
+    function renderSummary() {
+      showSection(summaryEl);
+      const total = state.answers.length;
+      const correct = state.answers.filter((entry) => entry.isCorrect).length;
+      const percent = total ? Math.round((correct / total) * 100) : 0;
+      const prefix = percent >= 80 ? "✅ You passed." : "❌ Try again.";
+      summaryStatsEl.textContent = `${prefix} You scored ${correct} out of ${total} (${percent}%).`;
+      summaryListEl.innerHTML = "";
+
+      state.answers.forEach((entry, index) => {
+        const item = document.createElement("div");
+        item.className = "summary-item";
+        const questionLabel = document.createElement("strong");
+        questionLabel.textContent = `${index + 1}. ${entry.question.question}`;
+        const userAnswer = entry.question.answer_options[entry.selectedIndex] || "No answer";
+        const correctAnswer =
+          entry.correctIndex === null
+            ? entry.question.correct_answer
+            : entry.question.answer_options[entry.correctIndex];
+        const userLine = document.createElement("p");
+        userLine.className = "muted";
+        if (entry.isCorrect) {
+          userLine.textContent = `✅ ${correctAnswer}`;
+        } else {
+          userLine.textContent = `❌ ${userAnswer}`;
+        }
+        const correctLine = document.createElement("p");
+        correctLine.className = "muted";
+        correctLine.textContent = `✅ ${correctAnswer}`;
+        item.appendChild(questionLabel);
+        item.appendChild(userLine);
+        if (!entry.isCorrect) {
+          item.appendChild(correctLine);
+        }
+        summaryListEl.appendChild(item);
+      });
+    }
+
+    document.querySelectorAll(".mode-card").forEach((card) => {
+      card.addEventListener("click", () => startMode(card.dataset.mode));
+    });
+
+    checkBtn.addEventListener("click", handleCheck);
+    nextBtn.addEventListener("click", handleNext);
+    quitBtn.addEventListener("click", () => showSection(welcomeEl));
+    restartBtn.addEventListener("click", () => showSection(welcomeEl));
+  </script>
+</body>
+</html>
