@@ -278,7 +278,6 @@
         <form id="options" class="options"></form>
         <div class="actions">
           <button id="check-btn" class="primary" type="button" disabled>Check answer</button>
-          <button id="next-btn" class="secondary hidden" type="button">Next</button>
           <button id="quit-btn" class="ghost" type="button">Quit</button>
         </div>
       </section>
@@ -301,7 +300,10 @@
       mode: null,
       questions: [],
       currentIndex: 0,
-      answers: []
+      answers: [],
+      awaitingNext: false,
+      retryQueue: [],
+      firstAttempts: new Set()
     };
 
     const welcomeEl = document.getElementById("welcome");
@@ -311,7 +313,6 @@
     const optionsEl = document.getElementById("options");
     const progressEl = document.getElementById("progress");
     const checkBtn = document.getElementById("check-btn");
-    const nextBtn = document.getElementById("next-btn");
     const quitBtn = document.getElementById("quit-btn");
     const summaryStatsEl = document.getElementById("summary-stats");
     const summaryListEl = document.getElementById("summary-list");
@@ -385,6 +386,8 @@
       }
       state.currentIndex = 0;
       state.answers = [];
+      state.retryQueue = [];
+      state.firstAttempts = new Set();
       showSection(quizEl);
       renderQuestion();
     }
@@ -401,7 +404,8 @@
       progressEl.textContent = "";
       optionsEl.innerHTML = "";
       checkBtn.disabled = true;
-      nextBtn.classList.add("hidden");
+      checkBtn.textContent = "Check answer";
+      state.awaitingNext = false;
 
       current.answer_options.forEach((option, idx) => {
         const label = document.createElement("label");
@@ -431,14 +435,22 @@
       const correctIndex = findCorrectIndex(current);
       const isCorrect = correctIndex !== null && selectedIndex === correctIndex;
       const optionLabels = Array.from(optionsEl.querySelectorAll(".option"));
+      const isFirstAttempt = !state.firstAttempts.has(current.originalIndex);
 
-      state.answers.push({
-        question: current,
-        selectedIndex,
-        correctIndex,
-        isCorrect
-      });
+      if (isFirstAttempt) {
+        state.firstAttempts.add(current.originalIndex);
+        state.answers.push({
+          question: current,
+          selectedIndex,
+          correctIndex,
+          isCorrect
+        });
+      }
 
+
+      if (!isCorrect && correctIndex !== null) {
+        state.retryQueue.push(current);
+      }
 
       if (isCorrect) {
         optionLabels[selectedIndex]?.classList.add("correct");
@@ -452,13 +464,19 @@
       Array.from(optionsEl.querySelectorAll("input")).forEach((input) => {
         input.disabled = true;
       });
-      nextBtn.classList.remove("hidden");
-      checkBtn.disabled = true;
+      checkBtn.textContent = "Next";
+      checkBtn.disabled = false;
+      state.awaitingNext = true;
     }
 
     function handleNext() {
       if (state.currentIndex < state.questions.length - 1) {
         state.currentIndex += 1;
+        renderQuestion();
+      } else if (state.retryQueue.length > 0) {
+        state.questions = state.retryQueue;
+        state.retryQueue = [];
+        state.currentIndex = 0;
         renderQuestion();
       } else {
         renderSummary();
@@ -507,8 +525,13 @@
       card.addEventListener("click", () => startMode(card.dataset.mode));
     });
 
-    checkBtn.addEventListener("click", handleCheck);
-    nextBtn.addEventListener("click", handleNext);
+    checkBtn.addEventListener("click", () => {
+      if (state.awaitingNext) {
+        handleNext();
+      } else {
+        handleCheck();
+      }
+    });
     quitBtn.addEventListener("click", () => showSection(welcomeEl));
     restartBtn.addEventListener("click", () => showSection(welcomeEl));
   </script>

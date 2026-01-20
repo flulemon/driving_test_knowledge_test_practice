@@ -123,11 +123,11 @@
     "question": "What is the penalty for not telling the truth when applying for a license",
     "answer_options": [
       "A fine of $25 to $100",
-      "Imprisonment of six months",
+      "Imprisonment of 6 months",
       "A court trial",
-      "No less than a $200 fine and up to six months imprisonment"
+      "No less than a $200 fine and up to 6 months imprisonment"
     ],
-    "correct_answer": "No less than a $200 fine and up to six months imprisonment"
+    "correct_answer": "No less than a $200 fine and up to 6 months imprisonment"
   },
   {
     "question": "Getting a driver's license illegally may result in a",
@@ -142,12 +142,12 @@
   {
     "question": "What are the fines and penalties for refusing to take the breathalyzer test",
     "answer_options": [
-      "$10,000 Fine six months jail time license suspension loss",
+      "$10,000 fine, 6 months jail time, license suspension loss",
       "Automatic DUI conviction",
       "License revoked for life",
-      "7 Months to one year license suspension court costs and fines insurance surcharge of $1,000 for 3 years"
+      "7 Months to 1 year license suspension, court costs and fines insurance surcharge of $1,000 for 3 years"
     ],
-    "correct_answer": "7 Months to one year license suspension court costs and fines insurance surcharge of $1,000 for 3 years"
+    "correct_answer": "7 Months to 1 year license suspension, court costs and fines insurance surcharge of $1,000 for 3 years"
   },
   {
     "question": "If a student driver commits a traffic offense who is responsible",
@@ -185,9 +185,9 @@
       "200 To $500 fine and possible jail time of 30 to 90 days",
       "License revoked for life",
       "Insurance surcharge of $1,000 for 3 years",
-      "$10,000 Fine six months jail time license suspension loss"
+      "$10,000 fine, 6 months jail time license suspension loss"
     ],
-    "correct_answer": "$10,000 Fine six months jail time license suspension loss"
+    "correct_answer": "$10,000 fine, 6 months jail time license suspension loss"
   },
   {
     "question": "A driver will get an insurance surcharge for which of the following",
@@ -333,7 +333,7 @@
     "question": "The shape of the stop sign is",
     "answer_options": [
       "Eight-sided",
-      "Demon (diamond)",
+      "Diamond",
       "Triangle point",
       "Circle"
     ],
@@ -523,7 +523,7 @@
     "question": "This yellow sign with black symbols cautions that there is a",
     "answer_options": [
       "Speed bump to the right",
-      "Passing aloud on the shoulder",
+      "Passing allowed on the shoulder",
       "A sharp turn to the right ahead",
       "A crosswalk coming up"
     ],
@@ -1073,11 +1073,11 @@
     "question": "What is a habitual offender",
     "answer_options": [
       "Any person whose license has been suspended once",
-      "Any person whose license has been suspended two times in two years",
-      "Any person whose license has been suspended three times in 3 years",
-      "Any person whose license has been suspended I time in two years"
+      "Any person whose license has been suspended 2 times in 2 years",
+      "Any person whose license has been suspended 3 times in 3 years",
+      "Any person whose license has been suspended 1 time in 2 years"
     ],
-    "correct_answer": "Any person whose license has been suspended three times in 3 years"
+    "correct_answer": "Any person whose license has been suspended 3 times in 3 years"
   },
   {
     "question": "In New Jersey when can studded snow tires legally be used",
@@ -1175,7 +1175,7 @@
       "6 Months",
       "3 Months",
       "1 Month",
-      "Two weeks"
+      "2 weeks"
     ],
     "correct_answer": "3 Months"
   },
@@ -1302,10 +1302,10 @@
   {
     "question": "If you have a blood alcohol concentration of 0.15% your chances of having an accident is",
     "answer_options": [
-      "Six times",
+      "6 times",
       "Double",
       "25 Times",
-      "Three times"
+      "3 times"
     ],
     "correct_answer": "25 Times"
   },
