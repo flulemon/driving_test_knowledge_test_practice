@@ -115,6 +115,17 @@
       margin-bottom: 12px;
     }
 
+    .quiz-nav {
+      display: flex;
+      justify-content: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .quiz-nav .ghost {
+      padding: 8px 14px;
+      font-size: 14px;
+    }
+
     .progress {
       font-size: 14px;
       color: var(--muted);
@@ -271,6 +282,9 @@
       </section>
 
       <section id="quiz" class="hidden">
+        <div class="quiz-nav">
+          <button id="quit-btn" class="ghost" type="button">← Back to the tests</button>
+        </div>
         <div class="question-header">
           <h2 id="question-text"></h2>
           <span class="progress" id="progress"></span>
@@ -278,7 +292,6 @@
         <form id="options" class="options"></form>
         <div class="actions">
           <button id="check-btn" class="primary" type="button" disabled>Check answer</button>
-          <button id="quit-btn" class="ghost" type="button">Quit</button>
         </div>
       </section>
 
